@@ -1,0 +1,23 @@
+name: lnkrr_py38
+channels:
+- defaults
+dependencies:
+- python=3.8   
+- pip
+- pip:
+    - numpy             # Numerical Linear Algebra
+    - scipy             # Scientific Computing
+    - pandas            # Data structure
+    - scikit-learn      # Machine Learning
+    - scikit-image      # Image Processing
+    - matplotlib
+    - seaborn
+    - tqdm
+    - jax
+    - jaxlib
+    - numpyro
+    - typing
+    - argparse
+    - rpy2
+    - pickle5
+
