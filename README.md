@@ -1,5 +1,5 @@
 # latentNoise
-Latent Noise imputation bivariate causal discovery method (LNc, ANMh & LNc-ANMh) from On Additivity and Model Complexity for Causal Discovery Manuscript.
+Latent Noise imputation bivariate causal discovery method (LNc, ANMh & LNc-ANMh) from "On Additivity and Model Complexity for Causal Discovery Manuscript".
 
 ## Main Function files
 1. src/latentNoise_funcs_gen.py: contains functions to estimate latent noise, fit KRR and calculate complexity measures
