@@ -18,7 +18,7 @@ def save_object(obj, filename):
     with open(filename, 'wb') as output:  # Overwrites any existing file.
         pickle.dump(obj, output, pickle.HIGHEST_PROTOCOL)
 
-def getRandResids(n):
+def getRandResids(n, q_r):
     x, y, z = sample_AN(n)
     output = onp.array(y)
     input = onp.array(x[:,None])
@@ -28,7 +28,8 @@ def getRandResids(n):
     yhat = gpModel.predict(input)
     resids = y - yhat
     errs = mse(y, yhat)
-    hsic = hsicRBF(resids, input)
+    #hsic = hsicRBF(resids, input)
+    hsic = hsicRBFq(resids, input, q_r, 0.5)
     return errs, hsic
 
 
@@ -43,9 +44,9 @@ def main(args):
     if args.server == "myLap":
         reposResults = "/home/emiliano/ISP/proyectos/latentNoise_krr/null_dists/hsicRX/parts/"
 
-
+    q_r = 0.45
     #save_shit(results, name=f"{args.save}_results_{args.job}.json")
-    fileRes = reposResults+"null_hsicRX"+str(job)+".pkl"
+    fileRes = reposResults+"null_hsicRX"+"_"+str(q_r*100)+"_"+str(job)+".pkl"
     #with open(fileRes, 'w') as outfile:
     #    json.dump(results, outfile)
 
@@ -61,7 +62,7 @@ def main(args):
         n = 1000
         print("starting hsicRX calc")
         start = time.process_time()
-        hsicMse = onp.array([getRandResids(n) for i in range(N)])
+        hsicMse = onp.array([getRandResids(n,q_r) for i in range(N)])
         print(time.process_time() - start)  #
         warnings.filterwarnings('default')
         print("finished")

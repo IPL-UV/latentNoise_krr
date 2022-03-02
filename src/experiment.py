@@ -10,7 +10,7 @@ import sys
 
 
 
-def main_experiment(dataset: np.ndarray, beta: np.ndarray, neta: np.ndarray, eta: np.ndarray, lam: np.ndarray,sig: np.ndarray, nu: np.ndarray, lu: np.ndarray,lr: float, name: str, optType: list, epchs:int, bs:int, reps:int) -> Dict:
+def main_experiment(dataset: np.ndarray, beta: np.ndarray, neta: np.ndarray, eta: np.ndarray, lam: np.ndarray,sig: np.ndarray, nu: np.ndarray, lu: np.ndarray,lr: float, name: str, optType: list, epchs:int, bs:int, reps:int, job:int) -> Dict:
     #beta = np.array([0.0]) # mse and hsic(z,x) penalty
     #eta = np.array([0.0]) # dependence on z_mani helper
     #neta = np.array([0.001])
@@ -24,12 +24,14 @@ def main_experiment(dataset: np.ndarray, beta: np.ndarray, neta: np.ndarray, eta
 
     print("optTypes: ", optType)
 
+
     start = time.process_time()
     res_latZ = getLatentZs(dataset, name, optType, lam, sig, beta, neta, eta, nu, lu, epchs+1, epchs,
-                      reps, bs, lr)
+                      reps, bs, lr, job)
     print(time.process_time() - start)  #
 
     #res_van = getModels_van(dataset, lam)
+
 
     res = {"Z": res_latZ}
 

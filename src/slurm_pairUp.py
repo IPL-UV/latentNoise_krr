@@ -58,12 +58,21 @@ def main(args):
     print("files in repos:", os.listdir(repos))
     filename = "df_bnch_v1_optType.pkl"
     df_bnch = pickle.load(open(repos + filename, "rb"))
-    filename = "df_v3-5_optType.pkl"
+    #filename = "df_v3-5_optType.pkl"
+    #filename = "df_v3-5_optType_vhsicx.pkl"
+    #filename = "df_v10_UAI.pkl"
+    filename = "df_v0_sens_800_UAI.pkl"
     df = pickle.load(open(repos + filename, "rb"))
+    print("cols1: ", df.columns)
     # get benchmark additive results
     pars = {"lambda": [0.01, 0.1, 1]}
     df_long_bnch = getLongFormat(df_bnch, pars)
     #_, res_bnch, res_bnch2 = getResBnch(df_long_bnch)
+
+
+    # original pipeline
+    pairUpNm = ["byParm", "rand", "intsc", "NN"]
+    weightNm = ["uniform", "lowestHsic", "effFront", "modSimp_logis", "modSimp_RF"]
 
     initStrats = [["freeZ-iniMani", "freeZ", "freeZ-iniR"], ["freeZ-iniMani", "freeZ"], ["freeZ"], ["freeZ-iniMani"]]
 
@@ -77,7 +86,51 @@ def main(args):
                   {"var_smpl_nm": var_smpl_nm},
                   {"var_smpl_nm": var_smpl_nm}]
 
-    initStrat_pairUp_df, initStrat_pairUp_weight_df = getPipelineDF(initStrats, parsPairUp, parsWeight)
+    # hail mary version
+
+    pairUpNm = ["NN"]
+    weightNm = ["lowestHsic"]
+
+    initStrats = [["freeZ"]]
+
+    parsPairUp = [{"varsss": [["hsicx", "hsicc", "errs"]], "numPts": [1,2,5,10,15,20]}]
+
+    var_smpl_nm = "smpld"
+    parsWeight = [{"var": ["hsicx"], "sig": [1, 5, 10]}]
+
+    # hail mary version 2
+
+    pairUpNm = ["byParm", "rand", "intsc", "NN"]
+    weightNm = ["uniform", "lowestHsic", "effFront", "modSimp_logis", "modSimp_RF"]
+
+    initStrats = [["freeZ"]]
+
+    parsPairUp = [{"m": [1]}, {"m": [1000, 10000]},
+                  {"varsss": [["hsicx", "hsicc", "errs"]], "sig": [1, 100.0, 1000.0], "m": [100, 1000]},
+                  {"varsss": [["hsicx", "hsicc", "errs"]], "numPts": [1, 2, 5, 10, 15, 20]}]
+
+    var_smpl_nm = "smpld"
+    parsWeight = [{}, {"var": ["hsicx"], "sig": [1, 5, 10]},
+                  {"varsss": [["hsicx", "hsicc"]], "sig": [1, 5, 10]},
+                  {"var_smpl_nm": [var_smpl_nm]},
+                  {"var_smpl_nm": [var_smpl_nm]}]
+
+    # consistency experiment
+
+    pairUpNm = ["NN"]
+    weightNm = ["lowestHsic"]
+
+    initStrats = [["freeZ"]]
+
+    parsPairUp = [{"varsss": [["hsicx", "hsicc", "errs"]], "numPts": [20]}]
+
+    var_smpl_nm = "smpld"
+    parsWeight = [{"var": ["hsicx"], "sig": [5]}]
+
+    initStrat_pairUp_df, initStrat_pairUp_weight_df = getPipelineDF(initStrats, parsPairUp, parsWeight, pairUpNm=pairUpNm, weightNm=weightNm)
+
+    print("pairup df shape",initStrat_pairUp_df.shape)
+    print("pairup-weight df shape",initStrat_pairUp_weight_df.shape)
 
     i = job-1
     initStrat = initStrat_pairUp_df.iloc[i]["initStrat"]

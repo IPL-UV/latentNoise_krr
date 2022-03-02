@@ -165,18 +165,33 @@ def load_dataset(dataset_num: int = 0, server: str="myLap") -> (np.ndarray, str)
 
 
     # declare parmeters
-    pars = {"lambda": [0.0001, 0.001, 0.01, 0.1],
+
+  
+    pars = {"lambda": [0.001, 0.01, 0.1, 1.0],
             "sig":[0.5],
-            "eta": [0.01],
-            "beta": [0.001, 0.01, 0.1],
-            "neta": [0.01],
+            "eta": [0.001],
+            "beta": [0.1, 1.0, 10.0],
+            "neta": [0.001,0.01, 0.1],
             "nu": [10.0],
             "lu": [0.0],
             "lr": [0.1],
             "ot": ["freeZ"],
             "epchs": [500],
             "bs":[100],
-            "reps":[5]}
+            "reps":[7]}
+
+    pars = {"lambda": [0.001, 0.01, 0.1, 1.0],
+            "sig":[0.5],
+            "eta": [0.1],
+            "beta": [0.1, 1.0, 10.0],
+            "neta": [0.1, 1.0, 10.0],
+            "nu": [1000.0],
+            "lu": [0.0],
+            "lr": [0.1],
+            "ot": ["freeZ"],
+            "epchs": [500],
+            "bs":[100],
+            "reps":[7]}
     
 
 
@@ -184,7 +199,21 @@ def load_dataset(dataset_num: int = 0, server: str="myLap") -> (np.ndarray, str)
     #            "SIM-1000_withZ": ['SIM', 'SIMc', 'SIMG', 'SIMln'],
     #            "ANLSMN_withZ": ['AN', 'AN-s', 'LS', 'LS-s','MN-U']}
 
-    fileDict = {"ANLSMN_withZ": ['LS-s']}
+    #fileDict = {"ANLSMN_withZ": ['LS', 'LS-s','MN-U']}
+
+    #fileDict = {"SIM-1000_withZ": ['SIM'],"ANLSMN_withZ": ['LS-s','MN-U']}
+
+    #fileDict = {"TCEP-all": ['tcep']}
+
+
+    fileDict = {"TCEP-all": ['tcep'],
+                "ANLSMN_withZ": ['LS-s','MN-U']}
+
+    #fileDict = {"ANLSMN_withZ": ['LS-s']}
+
+    #fileDict = {"SIM-1000_withZ": ['SIM', 'SIMc', 'SIMG', 'SIMln'],
+    #            "ANLSMN_withZ": ['AN', 'AN-s', 'LS']}
+
 
     datasetTab, data = getDataSetTab(repos, pars, fileDict, func_dict)
     
@@ -221,6 +250,8 @@ def load_dataset(dataset_num: int = 0, server: str="myLap") -> (np.ndarray, str)
     X = data[nm]
     X = onp.array(X)
 
+    dataInfo = {"type":fileNm, "dataset":nm}
+
     print("set: ", datasetTab["fileNms"][indx_set])
     print("dataset: ", nm)
 
@@ -229,24 +260,38 @@ def load_dataset(dataset_num: int = 0, server: str="myLap") -> (np.ndarray, str)
     if X.shape[0]>maxData:
         smpl = onp.random.randint(low=1, high=X.shape[0], size=maxData)
         X = X[smpl,:]
+	
+    X = norml_mat(X)
 
-    if (str(nm)=="8") | (str(nm)=="107") | (str(nm)=="70") & (fileNm == "TCEP-all"):
+    #if ((str(nm)=="8") | (str(nm)=="107") | (str(nm)=="70")) & (fileNm == "TCEP-all"):
+    #if ((str(nm)=="8") | (str(nm)=="107") | (str(nm)=="70") | (str(nm)=="87")) & (fileNm == "TCEP-all"):
+    if ((str(nm)=="8") | (str(nm)=="107") | (str(nm)=="70") | (str(nm)=="87") | (str(nm)=="27") | (str(nm)=="47")) & (fileNm == "TCEP-all"):
+    #if (fileNm == "TCEP-all"):
         print("jittering")
         X = jitter(X)
+        #X = onp.apply_along_axis(jitterByDist, 0, X)
 
     X = np.array(norml_mat(X))
 
-    return nm, X, pars  # load shit
+    return nm, X, pars, dataInfo  # load shit
 
 def main(args):
 
     job = int(args.job) + int(args.offset)
     # load dataset from job array id
     print("load")
-    nm, data, pars = load_dataset(dataset_num=job, server=args.server)
+    nm, data, pars, dataInfo = load_dataset(dataset_num=job, server=args.server)
     print("nm: ", nm)
     print("shape data", data.shape)
     print("pars: ", pars)
+
+
+    N = data.shape[0]
+    maxMonitor = 1000
+    parts = int(onp.ceil(N/maxMonitor))
+    print("parts: ", parts)
+    
+
 
     # do stuffs (Latent Noise-KRR over the data)
     print("getLatenZs etc")
@@ -263,6 +308,14 @@ def main(args):
     bs = int(pars["bs"])
     reps = int(pars["reps"])
 
+    
+    #batch_size2 = int(onp.floor(onp.min([onp.max([30, bs/1000*N]), 300])))
+    batch_size2 = int(onp.floor(onp.min([onp.max([90, bs/1000*N]), 300])))
+    epochs2 = int(onp.max([onp.ceil((50*N)/batch_size2), 500]))
+    print("epochs2: ", epochs2)
+    print("batch_size2: ", batch_size2)
+
+
     # save shit (to json)
     print("save")
 
@@ -277,13 +330,35 @@ def main(args):
     fileRes = reposResults+"latent_noise"+str(job)+".pkl"
     #with open(fileRes, 'w') as outfile:
     #    json.dump(results, outfile)
+    
+    pars = {"lambda": lam,
+            "sig":sig,
+            "eta": eta,
+            "beta": beta,
+            "neta": neta,
+            "nu": nu,
+            "lu": lu,
+            "lr": lr,
+            "ot": optType,
+            "epchs": epochs2,
+            "bs":batch_size2,
+            "reps":reps}
 
 
     if os.path.isfile(fileRes):
         print("File exist")
+        results = pickle.load( open( fileRes, "rb" ) )
+        results["pars"] = pars
+        results["dataInfo"] = dataInfo
+        print(results)
+    	# sample usage
+        save_object(results, fileRes)
     else:
         print("File not exist")
-        results = main_experiment(data, beta, neta, eta, lam,sig, nu, lu, lr, nm, optType, epchs, bs, reps)
+        results = main_experiment(data, beta, neta, eta, lam,sig, nu, lu, lr, nm, optType, epochs2, batch_size2, reps, job)
+        results["pars"] = pars
+        results["dataInfo"] = dataInfo
+        #print(results)
     	# sample usage
         save_object(results, fileRes)
     

@@ -69,6 +69,10 @@ def main(args):
     df_long_bnch = getLongFormat(df_bnch, pars)
     _ , res_bnch, res_bnch2 = getResBnch(df_long_bnch)
 
+    # original pipeline
+    pairUpNm = ["byParm", "rand", "intsc", "NN"]
+    weightNm = ["uniform", "lowestHsic", "effFront", "modSimp_logis", "modSimp_RF"]
+
     initStrats = [["freeZ-iniMani", "freeZ", "freeZ-iniR"], ["freeZ-iniMani", "freeZ"], ["freeZ"], ["freeZ-iniMani"]]
 
     parsPairUp = [{"m": [1]}, {"m": [1000, 10000]},
@@ -81,7 +85,49 @@ def main(args):
                   {"var_smpl_nm": [var_smpl_nm]},
                   {"var_smpl_nm": [var_smpl_nm]}]
 
-    initStrat_pairUp_df, initStrat_pairUp_weight_df = getPipelineDF(initStrats, parsPairUp, parsWeight)
+    # hail mary version
+
+    pairUpNm = ["NN"]
+    weightNm = ["lowestHsic"]
+
+    initStrats = [["freeZ"]]
+
+    parsPairUp = [{"varsss": [["hsicx", "hsicc", "errs"]], "numPts": [1,2,5,10,15,20]}]
+
+    var_smpl_nm = "smpld"
+    parsWeight = [{"var": ["hsicx"], "sig": [1, 5, 10]}]
+
+    # hail mary version 2
+
+    pairUpNm = ["byParm", "rand", "intsc", "NN"]
+    weightNm = ["uniform", "lowestHsic", "effFront", "modSimp_logis", "modSimp_RF"]
+
+    initStrats = [["freeZ"]]
+
+    parsPairUp = [{"m": [1]}, {"m": [1000, 10000]},
+                  {"varsss": [["hsicx", "hsicc", "errs"]], "sig": [1, 100.0, 1000.0], "m": [100, 1000]},
+                  {"varsss": [["hsicx", "hsicc", "errs"]], "numPts": [1, 2, 5, 10, 15, 20]}]
+
+    var_smpl_nm = "smpld"
+    parsWeight = [{}, {"var": ["hsicx"], "sig": [1, 5, 10]},
+                  {"varsss": [["hsicx", "hsicc"]], "sig": [1, 5, 10]},
+                  {"var_smpl_nm": [var_smpl_nm]},
+                  {"var_smpl_nm": [var_smpl_nm]}]
+
+    # consistency experiment
+
+    pairUpNm = ["NN"]
+    weightNm = ["lowestHsic"]
+
+    initStrats = [["freeZ"]]
+
+    parsPairUp = [{"varsss": [["hsicx", "hsicc", "errs"]], "numPts": [20]}]
+
+    var_smpl_nm = "smpld"
+    parsWeight = [{"var": ["hsicx"], "sig": [5]}]
+
+
+    initStrat_pairUp_df, initStrat_pairUp_weight_df = getPipelineDF(initStrats, parsPairUp, parsWeight, pairUpNm=pairUpNm, weightNm=weightNm)
 
     print("initStrat_pairUp_df.shape", initStrat_pairUp_df.shape)
     print("initStrat_pairUp_weight_df.shape", initStrat_pairUp_weight_df.shape)
@@ -115,7 +161,10 @@ def main(args):
     print("parsWeight: ", parsWeight)
     print("weightParsTup:", weightParsTup)
 
-    filename = str(jobPrev)+"_"+"df_pairUp_" + df_id + ".pkl"
+    filename = str(jobPrev)+"_"+"df_pairUp_" + df_id 
+    cons_v = "_cons_800"
+    filename = filename + cons_v
+    filename = filename + ".pkl"
     df2 = pickle.load(open(reposPairUp + filename, "rb"))
 
     print("dfPairUp.shape:", df2.shape)
@@ -128,6 +177,7 @@ def main(args):
         print("File exist")
     else:
         print("get tabAcc")
+        print(df2.columns)
         res_long, tabAcc = getAcc(df2, res_bnch, res_bnch2, initStrat, pairUpNm, parsPairUp, weightNm, weightModMatFunct,
                         weightModMatPars, weightModFunct, weightModPars, weightFunct, weightParsFunct, weightParsTup,
                         parsWeight)
@@ -135,7 +185,7 @@ def main(args):
         print("tabAcc.shape: ", tabAcc.shape)
         resAcc = tabAcc.to_dict()
         resDecision = res_long.to_dict()
-        print("length dict values: ", [len(res[k]) for k in res.keys()])
+        print("length dict values: ", [len(resAcc[k]) for k in resAcc.keys()])
         # save
         with open(fileResAcc, 'wb') as output:
             pickle.dump(resAcc, output, pickle.HIGHEST_PROTOCOL)

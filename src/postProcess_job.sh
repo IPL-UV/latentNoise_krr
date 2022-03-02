@@ -6,7 +6,7 @@
 #SBATCH --workdir=/home/emiliano/latentnoise_krr/src/
 #SBATCH --job-name=latentnoise_postprocess
 #SBATCH --output=/home/emiliano/latentnoise_krr/log/postProcess_%A_%a.out
-#SBATCH --array=1-432%2
+#SBATCH --array=1%18
 
 # initialize conda environment on ERC
 module load Anaconda3

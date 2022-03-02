@@ -10,10 +10,9 @@ import re;
 import numpy as onp
 import jax.numpy as np
 
-print("bla")
+
 r['source']('func_entropy_v1.R')
 funcs_r = robjects.globalenv
-
 
 def REarth(X,Y,M=1):
     #print("X.shape:", X.shape)

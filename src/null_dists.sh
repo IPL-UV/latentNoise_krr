@@ -14,4 +14,4 @@ module load Anaconda3
 source activate lnkrr_py38
 
 # DO STUFF
-srun --ntasks 1 --nodes 1  python -u null_hsicRC_script.py  --job $SLURM_ARRAY_TASK_ID  --server erc
+srun --ntasks 1 --nodes 1  python -u null_hsicRX_script.py  --job $SLURM_ARRAY_TASK_ID  --server erc

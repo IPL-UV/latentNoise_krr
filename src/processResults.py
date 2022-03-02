@@ -1,4 +1,4 @@
-import pickle5 as pickle
+#import pickle5 as pickle
 import pandas as pd
 import numpy as onp
 import bisect
@@ -12,10 +12,7 @@ from scipy.spatial import distance
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, balanced_accuracy_score, roc_auc_score, f1_score, precision_recall_curve, auc
-
-
-
+from sklearn.metrics import balanced_accuracy_score, roc_auc_score, f1_score
 
 #from fairlearn.reductions import ExponentiatedGradient, DemographicParity
 from sklearn.tree import DecisionTreeClassifier
@@ -32,38 +29,11 @@ print("enters processResults")
 def getRawMsrsDir_bnch(res_path, dir):
     errs = res_path["mse"]
     hsics = res_path["hsic_rx"]
-    hsicsq1 = res_path["hsic_rx_q1"]
-    hsicsq2 = res_path["hsic_rx_q2"]
-    hsicsq3 = res_path["hsic_rx_q3"]
-    hsicsq4 = res_path["hsic_rx_q4"]
-    hsicsq5 = res_path["hsic_rx_q5"]
-    hsicsq6 = res_path["hsic_rx_q6"]
-    hsicsq7 = res_path["hsic_rx_q7"]
-    hsicsq8 = res_path["hsic_rx_q8"]
-    hsicsq9 = res_path["hsic_rx_q9"]
-    pvals = res_path["pval_rx"]
-    hsics_null = res_path["hsic_rx_null"]
-    hsicRob = res_path["hsicRob_rx"]
-    hsicOptOrd = res_path["hsic_ord"]
-    optOrd = res_path["hsic_ordOpt"]
-
-
     ents = res_path["h_x"] + res_path["h_r"]
     slopes = res_path["cost_slope"]
     slopes_krr = res_path["cost_slope_krr"]
-    res = {"errs_" + dir: errs.tolist(), "hsic_" + dir: hsics.tolist(),
-           "hsicq1_" + dir: hsicsq1.tolist(), "hsicq2_" + dir: hsicsq2.tolist(),
-           "hsicq3_" + dir: hsicsq3.tolist(), "hsicq4_" + dir: hsicsq4.tolist(),
-           "hsicq5_" + dir: hsicsq5.tolist(), "hsicq6_" + dir: hsicsq6.tolist(),
-           "hsicq7_" + dir: hsicsq7.tolist(), "hsicq8_" + dir: hsicsq8.tolist(),
-           "hsicq9_" + dir: hsicsq9.tolist(),
-           "hsicNULL_" + dir: hsics_null.tolist(),
-           "pvalAdpt_" + dir: pvals.tolist(),
-           "hsicRob_"+ dir: hsicRob.tolist(), "hsicOptOrd_"+ dir: hsicOptOrd.tolist(), "optOrd_"+dir:optOrd.tolist(),
-           "ent_" + dir: ents.tolist(),
+    res = {"errs_" + dir: errs.tolist(), "hsic_" + dir: hsics.tolist(), "ent_" + dir: ents.tolist(),
            "slopes_" + dir: slopes.tolist(), "slopeskrr_" + dir: slopes_krr.tolist()}
-
-
 
     df = pd.DataFrame(res)
 
@@ -73,7 +43,7 @@ def getRawMsrs_bnch(res, job):
     df_xy = getRawMsrsDir_bnch(res["xy"],"xy")
     df_yx = getRawMsrsDir_bnch(res["yx"],"yx")
     df = pd.concat([df_xy, df_yx], axis=1)
-    if ("cy" in res.keys()) & False:
+    if "cy" in res.keys():
         df_cy = getRawMsrsDir_bnch(res["cy"],"cy")
         df_cx = getRawMsrsDir_bnch(res["cx"],"cx")
         df = pd.concat([df, df_cy, df_cx], axis=1)
@@ -91,7 +61,7 @@ def readGetMsrs_bnch(folder, file, job):
 #########################################################
 # REad in main results
 
-def getRawMsrsDir_legacy(res_path, dir):
+def getRawMsrsDir(res_path, dir):
     n = res_path["ent_c"].shape[0] - 1
     # print("n: ",n)
     errs = res_path["errs"][n, :]
@@ -118,100 +88,6 @@ def getRawMsrsDir_legacy(res_path, dir):
 
     return df
 
-def getRawMsrsDir(res_path, dir):
-    n = res_path["ent_c"].shape[0] - 1
-    # print("n: ",n)
-    #print("shape: ",res_path["errs"][n, :].shape)
-    #print("shape mean: ", onp.apply_along_axis(onp.mean, 1, res_path["errs"][n, :]).shape)
-
-    useAllParts = False
-    if useAllParts:
-        errs = onp.ndarray.flatten(res_path["errs"][n, :][:,None])
-        hsics = onp.ndarray.flatten(res_path["hsic_r"][n, :][:,None])
-        hsicsx = onp.ndarray.flatten(res_path["hsic_rx"][n, :][:,None])
-        hsicsz = onp.ndarray.flatten(res_path["hsic_rz"][n, :][:,None])
-        hsics_c = onp.ndarray.flatten(res_path["hsic"][n, :][:,None])
-        ents = onp.ndarray.flatten(res_path["ent_c"][n, :][:,None] + res_path["ent_r"][n, :][:,None])
-        entsx = onp.ndarray.flatten(res_path["ent_x"][n, :][:,None] + res_path["ent_r"][n, :][:,None])
-        #slopes = onp.ndarray.flatten(res_path["cost_slope"][n, :][:,None])
-        #slopes_krr = onp.ndarray.flatten(res_path["cost_slope_krr"][n, :][:,None])
-
-    else:
-        errs = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["errs"][n, :])[:, None])
-        hsics = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["hsic_r"][n, :])[:, None])
-        hsicsx = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["hsic_rx"][n, :])[:, None])
-        hsicsz = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["hsic_rz"][n, :])[:, None])
-        hsics_c = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["hsic"][n, :])[:, None])
-        ents = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["ent_c"][n, :])[:, None] + onp.apply_along_axis(onp.mean, 1, res_path["ent_r"][n, :])[:, None])
-        entsx = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["ent_x"][n, :])[:, None] + onp.apply_along_axis(onp.mean, 1, res_path["ent_r"][n, :])[:, None])
-        #slopes = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["cost_slope"][n, :])[:, None])
-        #slopes_krr = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["cost_slope_krr"][n, :])[:, None])
-
-    res = {"errs_" + dir: errs.tolist(), "hsic_" + dir: hsics.tolist(), "hsicc_" + dir: hsics_c.tolist(),
-           "ent_" + dir: ents.tolist(),  "entx_"+ dir:entsx.tolist(),#"slopes_" + dir: slopes.tolist(), "slopeskrr_" + dir: slopes_krr.tolist(),
-           "hsicx_" + dir: hsicsx.tolist(), "hsicz_" + dir: hsicsz.tolist()}
-
-    if "hsic_zzhat" in res_path.keys():
-        if useAllParts:
-            hsic_zzhat = onp.ndarray.flatten(res_path["hsic_zzhat"][n, :][:,None])
-        else:
-            hsic_zzhat = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["hsic_zzhat"][n, :])[:, None])
-        res["hsiczz_" + dir] = hsic_zzhat.tolist()
-
-    if "ent_c2" in res_path.keys():
-        if useAllParts:
-            ents2 = onp.ndarray.flatten(res_path["ent_c2"][n, :][:, None] + res_path["ent_r2"][n, :][:, None])
-        else:
-            ents2 = onp.ndarray.flatten(
-                onp.apply_along_axis(onp.mean, 1, res_path["ent_c2"][n, :])[:, None] + onp.apply_along_axis(onp.mean, 1,
-                                                                                                           res_path[
-                                                                                                               "ent_r2"][
-                                                                                                           n, :])[:,
-                                                                                      None])
-        res["ent2_" + dir] = ents2.tolist()
-
-
-    if "hsic_zhat" in res_path.keys():
-        #print("shape zhat: ", res_path["hsic_zhat"][n, 0].shape)
-        #print("shape zhat mean: ", onp.mean(res_path["hsic_zhat"][n, 0]).shape)
-        if useAllParts:
-            #print("hsic_zhat 1", res_path["hsic_zhat"])
-            hsic_zhat = onp.ndarray.flatten(res_path["hsic_zhat"][n, 0][None,None])
-            #print("hsic_zhat 2", hsic_zhat)
-        else:
-            hsic_zhat = onp.ndarray.flatten(onp.mean(res_path["hsic_zhat"][n, 0])[None, None])
-        res["hsicz_" + dir] = hsic_zhat.tolist()
-
-    if "MMDzn" in res_path.keys():
-        if useAllParts:
-            mmd = onp.ndarray.flatten(res_path["MMDzn"][n, :][:,None])
-        else:
-            mmd = onp.ndarray.flatten(onp.apply_along_axis(onp.mean, 1, res_path["MMDzn"][n, :])[:, None])
-        res["mmd_" + dir] = hsic_zhat.tolist()
-
-    def dealNan(x):
-        if onp.any(onp.isnan(x)):
-            res = onp.sqrt(-1)
-
-        elif len(x)==1:
-            res = x[0]
-        else:
-            res = x
-        return res
-
-    res = {k: dealNan(res[k]) for k in res.keys()}
-    df = pd.DataFrame(res)
-
-    return df
-
-def getRawMsrs_legacy(res, job):
-    df_xy = getRawMsrsDir_legacy(res["path_xy"],"xy")
-    df_yx = getRawMsrsDir_legacy(res["path_yx"],"yx")
-    df = pd.concat([df_xy, df_yx], axis=1)
-    df["job"] = job
-    df["rep"] = [i for i in range(df_xy.shape[0])]
-    return df
-
 def getRawMsrs(res, job):
     df_xy = getRawMsrsDir(res["path_xy"],"xy")
     df_yx = getRawMsrsDir(res["path_yx"],"yx")
@@ -221,27 +97,10 @@ def getRawMsrs(res, job):
     return df
 
 def readGetMsrs(folder, file, job):
+    #print("file", file)
     res = pickle.load( open( folder+file+job+".pkl", "rb" ) )
-
-    #res = res["Z"]
-    msrs = getRawMsrs(res["Z"], job)
-    def convPars(x):
-        if type(x) == onp.ndarray:
-            res = onp.round(x, 6)[0]
-        else:
-            res = x
-        return res
-
-    if "pars" in list(res.keys()):
-        parsJob = res["pars"]
-        parsJob = {k: convPars(parsJob[k]) for k in parsJob.keys()}
-        for k in parsJob.keys():
-            msrs[k] = parsJob[k]
-    if "dataInfo" in list(res.keys()):
-        dataInfo = res["dataInfo"]
-        for k in dataInfo.keys():
-            msrs[k] = dataInfo[k]
-
+    res = res["Z"]
+    msrs = getRawMsrs(res, job)
     return msrs
 
 #######################################################
@@ -336,7 +195,7 @@ def getDataSetTab(repos, par_dict, fileDict, func_dict):
     return datasetTab2, datsNew
 
 
-def get_df_legacy(msrs, datasetTab, dats, pars, func_dict):
+def get_df(msrs, datasetTab, dats, pars, func_dict):
     df = pd.concat(msrs, axis=0)
     jobs = df["job"].tolist()
     jobs = [int(jobs[i]) for i in range(df.shape[0])]
@@ -364,51 +223,6 @@ def get_df_legacy(msrs, datasetTab, dats, pars, func_dict):
 
     return df
 
-def get_df(msrs, datasetTab, dats, pars, func_dict):
-    print("get df2")
-    df = pd.concat(msrs, axis=0)
-    jobs = df["job"].tolist()
-    jobs = [int(jobs[i]) for i in range(df.shape[0])]
-    indxDT = [bisect.bisect_left(datasetTab["cumJobs_fin"], j) for j in jobs]
-    df["set"] = datasetTab["fileNms"][indxDT][:, None][:, 0]
-    if not onp.any([p in list(df.columns) for p in list(pars.keys())]):
-        for par in pars.keys():
-            df[par] = datasetTab[par][indxDT][:, None][:, 0]
-
-    matchMat = datasetTab["fileNames"][:, None] == datasetTab["fileNames"].unique()[:, None].T
-    indxDat = onp.apply_along_axis(onp.where, 1, matchMat)[:, 0, 0]
-    # dats = [getData(f) for f in datasetTab["fileNames"].unique()]
-
-    # filter by fileDict
-
-    nms = [list(dats[i].keys()) for i in indxDat]
-    nums = [len(dats[indxDat[i]][nms[i][j]]) for i in range(len(nms)) for j in range(len(nms[i]))]
-    nms = [nms[i][j] for i in range(len(nms)) for j in range(len(nms[i]))]
-
-
-    def maxRep(x):
-        return onp.max(x.rep)
-
-    reps = onp.array(df[list(pars.keys()) + ["rep","job"]].groupby(list(pars.keys())+["job"], sort=False).apply(maxRep)) + 1
-    reps = reps.tolist()
-
-    #numDatasets = int(len(nms) / len(reps))
-    #reps = [reps[i] for i in range(len(reps)) for j in range(numDatasets)]
-    #nms = [nms[i] for i in range(len(reps)) for j in range(reps[i])]
-    #nums = [nums[i] for i in range(len(reps)) for j in range(reps[i])]
-
-    nms = [nms[j] for j in range(len(reps)) for i in range(reps[j])]
-    nums = [nums[j] for j in range(len(reps)) for i in range(reps[j])]
-    reps = [reps[j] for j in range(len(reps)) for i in range(reps[j])]
-
-    if not "dataset" in list(df.columns):
-        df["dataset"] = nms
-    df["num"] = nums
-    # add type column based on name of set and name of dataset
-    df["type"] = [func_dict[st](ds) for (st, ds) in zip(df.set, df.dataset)]
-
-
-    return df
 
 def get_df_fromFile(msrsFunc, reposData, version, file, num_data, fileDict,  pars, func_dict):
     num_pars = onp.prod([len(pars[k]) for k in pars.keys()])
@@ -420,51 +234,17 @@ def get_df_fromFile(msrsFunc, reposData, version, file, num_data, fileDict,  par
     msrs = [msrsFunc(folder, file,str(i+1)) for i in range(num_files)]
     print(time.process_time() - start) #15 secs
     datasetTab, datsNew = getDataSetTab(reposData, pars, fileDict, func_dict)
-    print(msrs[0].columns)
-    if "lambda" in list(msrs[0].columns):
-        df = get_df(msrs, datasetTab, datsNew, pars, func_dict)
-    else :
-        df = get_df_legacy(msrs, datasetTab, datsNew, pars, func_dict)
-
+    df = get_df(msrs, datasetTab, datsNew, pars, func_dict)
     return df
 
 def getPvals_bnch(df_bnch):
     repos = "/home/emiliano/Documents/ISP/proyectos/causality/latentNoise_krr/null_dists/hsicRX/"
-    #filename = repos + "hsicRX_nulldist.pkl"
-    #hsic(r, x) 0.5-0.5 dist
-    filename = repos + "hsicRX_nulldist" + "_" + str(0.5 * 100) + "_" + ".pkl"
+    filename = repos + "hsicRX_nulldist.pkl"
     distHsicRX = pickle.load( open(filename, "rb"))
     pval_ln_xy= 1-stats.lognorm.cdf(df_bnch["hsic_xy"][:,None], s=distHsicRX["ln_pars"]["shape"], loc=distHsicRX["ln_pars"]["loc"], scale=distHsicRX["ln_pars"]["scale"])
     pval_ln_yx= 1-stats.lognorm.cdf(df_bnch["hsic_yx"][:,None], s=distHsicRX["ln_pars"]["shape"], loc=distHsicRX["ln_pars"]["loc"], scale=distHsicRX["ln_pars"]["scale"])
     df_bnch["hsicPval_xy"] = pval_ln_xy
     df_bnch["hsicPval_yx"] = pval_ln_yx
-
-    # hsic(r, x) q-0.5 dist
-    q_rs = [0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99]
-    q_rs = [0.0001, 0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-    q_rs = [0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.4, 0.45]
-    filename = repos + "hsicRX_nulldist.pkl"
-    cnt = 0
-    for q_r in q_rs:
-        cnt = cnt + 1
-        filename = repos + "hsicRX_nulldist" + "_" + str(onp.round(q_r* 100)) + "_" + ".pkl"
-        distHsicRX = pickle.load(open(filename, "rb"))
-        pval_ln_xy = 1 - stats.lognorm.cdf(df_bnch["hsicq"+str(cnt)+"_xy"][:, None], s=distHsicRX["ln_pars"]["shape"],
-                                           loc=distHsicRX["ln_pars"]["loc"], scale=distHsicRX["ln_pars"]["scale"])
-        pval_ln_yx = 1 - stats.lognorm.cdf(df_bnch["hsicq"+str(cnt)+"_yx"][:, None], s=distHsicRX["ln_pars"]["shape"],
-                                           loc=distHsicRX["ln_pars"]["loc"], scale=distHsicRX["ln_pars"]["scale"])
-        df_bnch["hsicPvalq"+str(cnt)+"_xy"] = pval_ln_xy
-        df_bnch["hsicPvalq"+str(cnt)+"_yx"] = pval_ln_yx
-
-
-
-
-    df_bnch["hsicNrm_xy"] = df_bnch["hsic_xy"] / df_bnch["hsicNULL_xy"]
-    df_bnch["hsicNrm_yx"] = df_bnch["hsic_yx"] / df_bnch["hsicNULL_yx"]
-
-    df_bnch["hsicMax_xy"] = onp.amax(df_bnch[["hsicq1_xy","hsicq2_xy", "hsic_xy"]],1)
-    df_bnch["hsicMax_yx"] = onp.amax(df_bnch[["hsicq1_yx","hsicq2_yx","hsic_yx"]],1)
-
     return df_bnch
 
 def getPvals(df, df_long_full, res_bnch):
@@ -594,10 +374,7 @@ def smplPt(d,m):
     return smpl
 
 def smplFromIntersection(X_xy, X_yx, sig, m):
-
-
-    Ds = rbf_kernel_matrix({"gamma": sig}, X_xy, X_yx)
-
+    Ds = rbf_kernel_matrix({"gamma":sig},X_xy, X_yx)
     indxSmpl = smplPt(onp.reshape(Ds, onp.prod(Ds.shape)), m)
     indxSmpl_xy = onp.int64(onp.floor(indxSmpl / Ds.shape[0]))
     indxSmpl_yx = onp.int64(onp.floor(indxSmpl % Ds.shape[0]))
@@ -653,16 +430,11 @@ def getWeights(x, nm, funct, getParsFunct, pars):
     # m = 100
     # func = smplRand
     # pars = (n,m)
-
     parsExtX = (x, *pars)
     parsExt = getParsFunct(*parsExtX)
     ws = funct(*parsExt)
     res = x
     res[nm] = ws
-    #if (res.shape[0] != 270) | (res.shape[1] != 37):
-    #    print("type", onp.unique(x.type))
-    #    print("dataset", onp.unique(x.dataset))
-    #    print("res shape",res.shape)
 
     return res
 
@@ -764,7 +536,6 @@ def getParsHsicW(x, var, sig):
     return X_xy, X_yx, sig
 
 def lowestHsic(X_xy, X_yx, sig):
-    #minHsic = onp.array(onp.log10(0.00001))[None,None]
     minHsic = onp.min(onp.hstack([X_xy, X_yx]))[None,None]
     Ds_xy = rbf_kernel_matrix({"gamma":sig},onp.array(minHsic), X_xy)
     Ds_yx = rbf_kernel_matrix({"gamma":sig},onp.array(minHsic), X_yx)
@@ -1443,18 +1214,14 @@ def vote(x, ws_nm):
     hsicc_yx = onp.array(x["value"][(x["var"] == "hsicc") & (x["dir"] == "yx")])
     ent_xy = onp.array(x["value"][(x["var"] == "ent") & (x["dir"] == "xy")])
     ent_yx = onp.array(x["value"][(x["var"] == "ent") & (x["dir"] == "yx")])
-    #ent2_xy = onp.array(x["value"][(x["var"] == "ent2") & (x["dir"] == "xy")])
-    #ent2_yx = onp.array(x["value"][(x["var"] == "ent2") & (x["dir"] == "yx")])
-    entx_xy = onp.array(x["value"][(x["var"] == "entx") & (x["dir"] == "xy")])
-    entx_yx = onp.array(x["value"][(x["var"] == "entx") & (x["dir"] == "yx")])
+    #entx_xy = onp.array(x["value"][(x["var"] == "entx") & (x["dir"] == "xy")])
+    #entx_yx = onp.array(x["value"][(x["var"] == "entx") & (x["dir"] == "yx")])
     #slope_xy = onp.array(x["value"][(x["var"] == "slopes") & (x["dir"] == "xy")])
     #slope_yx = onp.array(x["value"][(x["var"] == "slopes") & (x["dir"] == "yx")])
     #slope_krr_xy = onp.array(x["value"][(x["var"] == "slopeskrr") & (x["dir"] == "xy")])
     #slope_krr_yx = onp.array(x["value"][(x["var"] == "slopeskrr") & (x["dir"] == "yx")])
     hsicz_xy = onp.array(x["value"][(x["var"] == "hsicz") & (x["dir"] == "xy")])
     hsicz_yx = onp.array(x["value"][(x["var"] == "hsicz") & (x["dir"] == "yx")])
-    mmd_xy = onp.array(x["value"][(x["var"] == "mmd") & (x["dir"] == "xy")])
-    mmd_yx = onp.array(x["value"][(x["var"] == "mmd") & (x["dir"] == "yx")])
 
     # ws = onp.array(x["value"][(x["dir"]==ws_nm)])
     ws = onp.array(x[ws_nm][(x["var"] == "errs") & (x["dir"] == "xy")])
@@ -1462,138 +1229,42 @@ def vote(x, ws_nm):
 
     scr_err = (errs_yx < errs_xy) * -ws + (errs_yx > errs_xy) * ws
     scr_hsic = (hsic_yx < hsic_xy) * -ws + (hsic_yx > hsic_xy) * ws
-    #scr_hsicx = (hsicx_yx < hsicx_xy) * -ws + (hsicx_yx > hsicx_xy) * ws
+    scr_hsicx = (hsicx_yx < hsicx_xy) * -ws + (hsicx_yx > hsicx_xy) * ws
     scr_hsicc = (hsicc_yx < hsicc_xy) * -ws + (hsicc_yx > hsicc_xy) * ws
     scr_ent = (ent_yx < ent_xy) * -ws + (ent_yx > ent_xy) * ws
-    #scr_ent2 = (ent2_yx < ent2_xy) * -ws + (ent2_yx > ent2_xy) * ws
     #scr_entx = (entx_yx < entx_xy) * -ws + (entx_yx > entx_xy) * ws
     #scr_slope = (slope_yx < slope_xy) * -ws + (slope_yx > slope_xy) * ws
     #scr_slope_krr = (slope_krr_yx < slope_krr_xy) * -ws + (slope_krr_yx > slope_krr_xy) * ws
     hiscz = (hsicz_yx < hsicz_xy) * ws + (hsicz_yx > hsicz_xy) * -ws
-    scr_mmd = (mmd_yx < mmd_xy) * -ws + (mmd_yx > mmd_xy) * ws
 
     d = {}
     d['errs'] = onp.sum(scr_err)
     d['hsic'] = onp.sum(scr_hsic)
-    #d['hsicx'] = onp.sum(scr_hsicx)
+    d['hsicx'] = onp.sum(scr_hsicx)
     d['hsicc'] = onp.sum(scr_hsicc)
     d['ent'] = onp.sum(scr_ent)
-    #d['ent2'] = onp.sum(scr_ent2)
     #d['entx'] = onp.sum(scr_entx)
     #d['slope'] = onp.sum(scr_slope)
     #d['slope_krr'] = onp.sum(scr_slope_krr)
     d['hsicz'] = onp.sum(hiscz)
-    d['mmd'] = onp.sum(scr_mmd)
 
-
-    varsDict = ['errs', 'ent', 'entx', 'hsic', 'hsicx', "hsicc", "hsicz"]
-    varsDict = ['errs', 'ent', 'entx', 'hsic', 'hsicx', "hsicc", "hsicz"]
-    varsDict = ['errs', 'ent', 'hsic',  "hsicc", "hsicz","mmd"]
-    res = pd.Series(d, index=varsDict) #'slope', "slope_krr",
+    res = pd.Series(d, index=['errs', 'ent', 'hsic','hsicx', "hsicc",  "hsicz"]) #'slope', "slope_krr",,'entx'
 
     return res
 
+
+
 def aggBnch(x):
-
     pvals_hsic = onp.array(x["value"][(x["var"] == "hsicPval")])
-
-    pvals_hsicq1 = onp.array(x["value"][(x["var"] == "hsicPvalq1")])
-    pvals_hsicq2 = onp.array(x["value"][(x["var"] == "hsicPvalq2")])
-    pvals_hsicq3 = onp.array(x["value"][(x["var"] == "hsicPvalq3")])
-    pvals_hsicq4 = onp.array(x["value"][(x["var"] == "hsicPvalq4")])
-    pvals_hsicq5 = onp.array(x["value"][(x["var"] == "hsicPvalq5")])
-    pvals_hsicq6 = onp.array(x["value"][(x["var"] == "hsicPvalq6")])
-    pvals_hsicq7 = onp.array(x["value"][(x["var"] == "hsicPvalq7")])
-    pvals_hsicq8 = onp.array(x["value"][(x["var"] == "hsicPvalq8")])
-    pvals_hsicq9 = onp.array(x["value"][(x["var"] == "hsicPvalq9")])
-    pvals_hsicqs = [pvals_hsicq1, pvals_hsicq2,pvals_hsicq3, pvals_hsicq4, pvals_hsicq5, pvals_hsicq6, pvals_hsicq7, pvals_hsicq8,pvals_hsicq9]
-
-    pvals_adpt = onp.array(x["value"][(x["var"] == "pvalAdpt")])
-    hsics = onp.array(x["value"][(x["var"] == "hsic")])
-
-    hsicsq1 = onp.array(x["value"][(x["var"] == "hsicq1")])
-    hsicsq2 = onp.array(x["value"][(x["var"] == "hsicq2")])
-    hsicsq3 = onp.array(x["value"][(x["var"] == "hsicq3")])
-    hsicsq4 = onp.array(x["value"][(x["var"] == "hsicq4")])
-    hsicsq5 = onp.array(x["value"][(x["var"] == "hsicq5")])
-    hsicsq6 = onp.array(x["value"][(x["var"] == "hsicq6")])
-    hsicsq7 = onp.array(x["value"][(x["var"] == "hsicq7")])
-    hsicsq8 = onp.array(x["value"][(x["var"] == "hsicq8")])
-    hsicsq9 = onp.array(x["value"][(x["var"] == "hsicq9")])
-    hsicsqs = [hsicsq1, hsicsq2, hsicsq3, hsicsq4,hsicsq5, hsicsq6, hsicsq7, hsicsq8, hsicsq9]
-
-    hsicsMax = onp.array(x["value"][(x["var"] == "hsicMax")])
-    hsicNrm = onp.array(x["value"][(x["var"] == "hsicNrm")])
-
-    hsicRob = onp.array(x["value"][(x["var"] == "hsicRob")])
-    hsicOptOrd = onp.array(x["value"][(x["var"] == "hsicOptOrd")])
-    optOrd = onp.array(x["value"][(x["var"] == "optOrd")])
-    lambdas = onp.array(x["lambda"][(x["var"] == "optOrd")])
-
-
-    errs = onp.array(x["value"][(x["var"] == "errs")])
-
+    errs = onp.array(x["value"][(x["variable"] == "errs_xy")])
 
     d = {}
-    d['minErrsBnch'] = onp.nanmin(errs)
-    d['difErrsBnch'] = onp.nanmax(errs) - onp.nanmin(errs)
-    d['maxPvalHsicBnch'] = onp.nanmax(pvals_hsic)
-    d['difPvalHsicBnch'] = onp.nanmax(pvals_hsic) - onp.nanmin(pvals_hsic)
+    d['minErrsBnch'] = onp.min(errs)
+    d['difErrsBnch'] = onp.max(errs) - onp.min(errs)
+    d['maxPvalHsicBnch'] = onp.max(pvals_hsic)
+    d['difPvalHsicBnch'] = onp.max(pvals_hsic) - onp.min(pvals_hsic)
 
-    q_rs = [0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.9, 0.95, 0.99]
-    q_rs = [0.0001, 0.001, 0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]
-    q_rs = [0.26, 0.28, 0.3, 0.32, 0.34, 0.36, 0.38, 0.4, 0.45]
-    cnt = 0
-    for q_r in q_rs:
-        d['maxPvalHsicq'+str(cnt+1)+'Bnch'] = onp.nanmax(pvals_hsicqs[cnt])
-        d['difPvalHsicq'+str(cnt+1)+'Bnch'] = onp.nanmax(pvals_hsicqs[cnt]) - onp.nanmin(pvals_hsicqs[cnt])
-        cnt = cnt + 1
-
-
-    d['maxPvalHsicAdptBnch'] = onp.nanmax(pvals_adpt)
-    d['difPvalHsicAdptBnch'] = onp.nanmax(pvals_adpt) - onp.nanmin(pvals_adpt)
-    d['minHsicBnch'] = onp.nanmin(hsics)
-    d['difHsicBnch'] = onp.nanmax(hsics) - onp.nanmin(hsics)
-
-    cnt = 0
-    for q_r in q_rs:
-        d['minHsicq'+str(cnt+1)+'Bnch'] = onp.nanmin(hsicsqs[cnt])
-        d['difHsicq'+str(cnt+1)+'Bnch'] = onp.nanmax(hsicsqs[cnt]) - onp.nanmin(hsicsqs[cnt])
-        cnt = cnt + 1
-
-    d['minHsicMaxBnch'] = onp.nanmin(hsicsMax)
-    d['difHsicMaxBnch'] = onp.nanmax(hsicsMax) - onp.nanmin(hsicsMax)
-    d['minHsicNormBnch'] = onp.nanmin(hsicNrm)
-    d['difHsicNormBnch'] = onp.nanmax(hsicNrm) - onp.nanmin(hsicNrm)
-
-    d['minHsicRobBnch'] = onp.nanmin(hsicRob)
-    d['difHsicRobBnch'] = onp.nanmax(hsicRob) - onp.nanmin(hsicRob)
-    d['minHsicOptOrdBnch'] = onp.nanmin(hsicOptOrd)
-    d['difHsicOptOrdBnch'] = onp.nanmax(hsicOptOrd) - onp.nanmin(hsicOptOrd)
-
-    indx = onp.nanargmax(pvals_hsic)
-    indxGP, = onp.where(lambdas==-1.0)
-    d["minOrdBnch"] = onp.nanmean(optOrd)#onp.nanmean(optOrd[indxGP]) #optOrd[indx]
-
-
-
-    res = pd.Series(d, index=['minErrsBnch', 'difErrsBnch', 'maxPvalHsicBnch', 'difPvalHsicBnch',
-                              'maxPvalHsicq1Bnch', 'difPvalHsicq1Bnch','maxPvalHsicq2Bnch', 'difPvalHsicq2Bnch',
-                              'maxPvalHsicq3Bnch', 'difPvalHsicq3Bnch', 'maxPvalHsicq4Bnch', 'difPvalHsicq4Bnch',
-                              'maxPvalHsicq5Bnch', 'difPvalHsicq5Bnch', 'maxPvalHsicq6Bnch', 'difPvalHsicq6Bnch',
-                              'maxPvalHsicq7Bnch', 'difPvalHsicq7Bnch', 'maxPvalHsicq8Bnch', 'difPvalHsicq8Bnch',
-                              'maxPvalHsicq9Bnch', 'difPvalHsicq9Bnch',
-                              'maxPvalHsicAdptBnch', 'difPvalHsicAdptBnch',
-                              'minHsicBnch', 'difHsicBnch',
-                              'minHsicq1Bnch', 'difHsicq1Bnch','minHsicq2Bnch', 'difHsicq2Bnch',
-                              'minHsicq3Bnch', 'difHsicq3Bnch', 'minHsicq4Bnch', 'difHsicq4Bnch',
-                              'minHsicq5Bnch', 'difHsicq5Bnch', 'minHsicq6Bnch', 'difHsicq6Bnch',
-                              'minHsicq7Bnch', 'difHsicq7Bnch', 'minHsicq8Bnch', 'difHsicq8Bnch',
-                              'minHsicq9Bnch', 'difHsicq9Bnch',
-                              'minHsicMaxBnch', 'difHsicMaxBnch',
-                              'minHsicNormBnch','difHsicNormBnch',
-                              'minHsicRobBnch','difHsicRobBnch',
-                              'minHsicOptOrdBnch','difHsicOptOrdBnch','minOrdBnch'])
+    res = pd.Series(d, index=['minErrsBnch', 'difErrsBnch', 'maxPvalHsicBnch', 'difPvalHsicBnch'])
 
     return res
 
@@ -1602,9 +1273,6 @@ def voteBnch(x):
     errs_yx = onp.array(x["value"][(x["var"] == "errs") & (x["dir"] == "yx")])
     hsic_xy = onp.array(x["value"][(x["var"] == "hsic") & (x["dir"] == "xy")])
     hsic_yx = onp.array(x["value"][(x["var"] == "hsic") & (x["dir"] == "yx")])
-    argMinHsic_xy = onp.nanargmin(hsic_xy)
-    argMinHsic_yx = onp.nanargmin(hsic_yx)
-
     ent_xy = onp.array(x["value"][(x["var"] == "ent") & (x["dir"] == "xy")])
     ent_yx = onp.array(x["value"][(x["var"] == "ent") & (x["dir"] == "yx")])
     slope_xy = onp.array(x["value"][(x["var"] == "slopes") & (x["dir"] == "xy")])
@@ -1614,22 +1282,18 @@ def voteBnch(x):
 
     scr_err = (errs_yx < errs_xy) * -1 + (errs_yx > errs_xy) * 1
     scr_hsic = (hsic_yx < hsic_xy) * -1 + (hsic_yx > hsic_xy) * 1
-    scr_hsic2 = onp.nanmin(hsic_yx)-onp.nanmin(hsic_xy)
     scr_ent = (ent_yx < ent_xy) * -1 + (ent_yx > ent_xy) * 1
-    scr_ent2 = ent_yx[argMinHsic_yx]-ent_xy[argMinHsic_xy]
     scr_slope = (slope_yx < slope_xy) * -1 + (slope_yx > slope_xy) * 1
     scr_slope_krr = (slope_krr_yx < slope_krr_xy) * -1 + (slope_krr_yx > slope_krr_xy) * 1
 
     d = {}
     d['errs'] = onp.mean(scr_err)
     d['hsic'] = onp.mean(scr_hsic)
-    d['hsic2'] = scr_hsic2
     d['ent'] = onp.mean(scr_ent)
-    d['ent2'] = scr_ent2
     d['slope'] = onp.mean(scr_slope)
     d['slope_krr'] = onp.mean(scr_slope_krr)
 
-    res = pd.Series(d, index=['errs', 'ent','ent2', 'hsic','hsic2', 'slope', "slope_krr"])
+    res = pd.Series(d, index=['errs', 'ent', 'hsic', 'slope', "slope_krr"])
 
     return res
 
@@ -1651,7 +1315,8 @@ def addWeights(repos, dec_long):
     fileDict = {"TCEP-all": ['tcep']}
     fileNmsAll = ["TCEP-all"]
     fileNms = list(fileDict.keys())
-    repos2 = "/home/emiliano/Documents/ISP/proyectos/causality/latentNoise_krr/data/"
+    #repos2 = "/home/emiliano/Documents/ISP/proyectos/causality/latentNoise_krr/data/"
+    repos2 = "/home/emiliano/latentnoise_krr/data/"
     reposRelAll = (["TCEPs/" for i in range(2)])
     reposRelAll = {f: r for (f, r) in zip(fileNmsAll, reposRelAll)}
     reposRel = [reposRelAll[k] for k in fileNms]
@@ -1707,24 +1372,12 @@ def addWeights(repos, dec_long):
         dec_long["confValue"] = onp.sign(dec_long["value"])*dec_long["conf"]
 
     return dec_long
-
 def roc(x, var):
     onp.random.seed(0)
     trueVal = onp.random.choice(onp.array([-1, 1]), size=x.shape[0], replace=True)
     pred = x[var] * trueVal
     res = roc_auc_score(trueVal, pred, sample_weight=x["smpl_wts"])
     return res
-
-def proc(x, var):
-    onp.random.seed(0)
-    trueVal = onp.random.choice(onp.array([-1, 1]), size=x.shape[0], replace=True)
-    pred = x[var] * trueVal
-    precision, recall, thresholds = precision_recall_curve(trueVal, pred, sample_weight=x["smpl_wts"])
-    o = onp.argsort(recall)
-    res = auc(recall[o], precision[o])
-
-    return res
-
 
 def f1(x, var):
     onp.random.seed(0)
@@ -1740,14 +1393,6 @@ def bal_acc(x, var):
     pred = (x[var] > 0) * 1 + (x[var] <= 0) * -1
     pred = pred * trueVal
     res = balanced_accuracy_score(trueVal, pred, sample_weight=x["smpl_wts"])
-    return res
-
-def acc(x, var):
-    onp.random.seed(0)
-    trueVal = onp.random.choice(onp.array([-1, 1]), size=x.shape[0], replace=True)
-    pred = (x[var] > 0) * 1 + (x[var] <= 0) * -1
-    pred = pred * trueVal
-    res = accuracy_score(trueVal, pred, sample_weight=x["smpl_wts"])
     return res
 
 def getPerfTab(dec, msr, var):
@@ -1798,7 +1443,7 @@ def voteSmpl_bnch(smpl, x):
     return res
 
 def getConf_bnch(x,  n_smpls):
-    n = onp.max(x.smpl)+1
+    n = onp.max(x.smpl)
     n_samples_bootstrap = n_smpls
     random_instance = check_random_state(0)
     smpls = random_instance.randint(0, n, (n, n_samples_bootstrap))
@@ -1815,17 +1460,18 @@ def getAccuracy(df_long, ws_nm, parVars=[], mask=None,  sig=0.001, res_bnch=None
     varsID = ["type", "dataset"]
     varsID = varsID + parVars
     varsID2 = list(set(varsID).intersection(list(df_long.columns)))
-    print("varsID2:",varsID2)
+
     res = df_long.groupby(varsID2).apply(vote, ws_nm=ws_nm)
     res = res.reset_index()
-    repos = "/home/emiliano/Documents/ISP/proyectos/causality/latentNoise_krr/data/"
+    #repos = "/home/emiliano/Documents/ISP/proyectos/causality/latentNoise_krr/data/"
+    repos = "/home/emiliano/latentnoise_krr/data/"
     res = addWeights(repos, res)
 
     print("n_smpls:", n_smpls)
 
     if res_bnch is not None:
         res_bnch = addWeights(repos, res_bnch)
-        res = res.merge(res_bnch, how="inner", on=["type", "dataset","smpl_wts"])
+        res = res.merge(res_bnch, how="inner", on=["type", "dataset"])
         res["additive"] = res["maxPvalHsicBnch"] > sig
         dtsAdd = list(onp.unique(res.loc[(res["additive"]) & (res["type"] == "tcep")]["dataset"]))
         dtsNonAdd = list(onp.unique(
@@ -1834,9 +1480,7 @@ def getAccuracy(df_long, ws_nm, parVars=[], mask=None,  sig=0.001, res_bnch=None
         res = addGrp2Dec(res, grpDef, "tcep_Add")
         grpDef = [(d in dtsNonAdd) & (t == "tcep") for (d, t) in zip(res["dataset"], res["type"])]
         res = addGrp2Dec(res, grpDef, "tcep_NonAdd")
-        #print("cols 1:", res.columns)
-        #print("types 1:", onp.unique(res["type"]))
-
+        
     if mask == "additive":
         res_bnch2 = addWeights(repos, res_bnch2)
         res_bnch2 = res_bnch2.merge(res_bnch, how="inner", on=["type", "dataset"])
@@ -1848,15 +1492,15 @@ def getAccuracy(df_long, ws_nm, parVars=[], mask=None,  sig=0.001, res_bnch=None
         res_bnch2 = addGrp2Dec(res_bnch2, grpDef, "tcep_Add")
         grpDef = [(d in dtsNonAdd) & (t == "tcep") for (d, t) in zip(res_bnch2["dataset"], res_bnch2["type"])]
         res_bnch2 = addGrp2Dec(res_bnch2, grpDef, "tcep_NonAdd")
-        #nmsBnch = [v.split("Bnch")[0] for v in list(set(list(res_bnch2.columns)).difference(["type", "dataset"]))]
+        
+	#nmsBnch = [v.split("Bnch")[0] for v in list(set(list(res_bnch2.columns)).difference(["type", "dataset"]))]
         nmsBnch = list(set(list(res_bnch2.columns)).difference(["type", "dataset"]))
         varss = list(set(list(res.columns)).difference(["type", "dataset"]).intersection(nmsBnch))
         res = res.merge(res_bnch2, how="inner", on=["type", "dataset"], suffixes=('', '_bnch'))
-
         for v in varss:
             res.loc[res["additive"], v] = res.loc[res["additive"], v + "_bnch"]
-        res = res[["type", "dataset","additive"] + varss]
-        print("types 2:", onp.unique(res["type"]))
+        res = res[onp.unique(["type", "dataset","additive"] + varss).tolist()]
+        
     if conf:
         ds = onp.unique(df_long["dataset"])[0]
         st = onp.unique(df_long["type"])[0]
@@ -1892,25 +1536,28 @@ def getAccuracy(df_long, ws_nm, parVars=[], mask=None,  sig=0.001, res_bnch=None
         res_long["conf"].loc[res_long["value"] < 0] = 1 - res_long["conf"].loc[res_long["value"] < 0]
 
     else:
-        print("cols 2:", res.columns)
-        #print("types 3:", onp.unique(res["type"]))
-        varsID2 = list(set(varsID).intersection(list(res.columns)))+["smpl_wts"]
+        varsID2 = list(set(varsID).intersection(list(res.columns)))
         res_long = pd.melt(res, id_vars=varsID2)
 
-
-    varsIndx =[v in ["ent","ent2","entx","errs", "hsic","hsicc","hsicx","hsicz","mmd"] for v in res_long["variable"]]
+    varsIndx =[v in ["ent","ent2","entx","errs", "hsic","hsicc","hsicx","hsicz"] for v in res_long["variable"]]
     res_long = res_long.loc[varsIndx]
 
-    res_acc = res_long.groupby(varsAcc).apply(acc, "value")
+    print("vars acc: ", varsAcc)
+    res_acc = res_long.groupby(varsAcc).apply(accuracy)
     tabAcc = pd.DataFrame(res_acc)
     tabAcc = tabAcc.reset_index()
     tabAcc = tabAcc.rename(columns={0: "value"}, errors="raise")
+    print(tabAcc)
     return res_long, tabAcc
 
 # helper for turnToIndex
 def mywhere(x):
     res, = onp.where(x)
     return res[0]
+
+def mywhere2(x):
+    res, = onp.where(x)
+    return res
 
 # to add "smpl" var to non sampled dfs based on unique parameter combo
 def turnToIndex(indexList, pars):
@@ -1936,6 +1583,8 @@ def getResBnch(df_long_bnch, conf=False, n_smpls=100):
         ds = onp.unique(df_long_bnch["dataset"])[0]
         st = onp.unique(df_long_bnch["type"])[0]
         x = df_long_bnch.loc[(df_long_bnch["dataset"] == st + "." + ds)]
+
+        print("measure time for one dataset")
         start = time.process_time()
         aux = getConf_bnch(x, n_smpls=n_smpls)
         timePerUnit = time.process_time() - start
@@ -2045,8 +1694,6 @@ def formatTabAcc(tabAcc, initStrat, pairUpNm, parsPairUp, weightNm, parsWeight, 
 # of values given for each key... return a dataframe
 def expandPars(dictFixed, pars, nm):
     parsCombos = [[ { k:it for k,it in zip(pars[i].keys(), list(ite))}  for ite in itertools.product(*[pars[i][ke] for ke in  pars[i].keys()]) ] for i in range(len(pars))]
-    print(nm)
-    print(parsCombos)
     indxRest = [i for i in range(len(parsCombos)) for j in range(len(parsCombos[i])) ]
     parsCombos = [parsCombos[i][j]  for i in range(len(parsCombos)) for j in range(len(parsCombos[i]))]
     dictFixed2 = {k:[dictFixed[k][i] for i in indxRest] for k in dictFixed.keys()}
@@ -2075,7 +1722,8 @@ def getPairUpDF(df, initStrat, pairUpFunct, parsPairUpFunct, parsPairUp):
     df2 = df2.loc[[ot in initStrat for ot in df2["ot"]]]
     # pair-up
     parsPairUp2 = tuple(i for i in parsPairUp.values())
-    varss = ['errs','hsic','hsicc','ent','slopes','slopeskrr','hsicz','hsiczz','mmd']
+    #varss = ['errs','hsic','hsicc','ent','slopes','slopeskrr','hsicz','hsiczz','mmd']
+    varss = ['errs','hsic','hsicx','hsicc','ent','hsicz','hsiczz','mmd']
     df2 = df2.groupby(['type',"dataset"]).apply(pairup,varss=varss, funct=pairUpFunct, getParsFunct=parsPairUpFunct, pars=parsPairUp2)
     df2 = df2.reset_index()
     df2 = df2.rename(columns={"level_2": "smpl"})
@@ -2092,10 +1740,11 @@ def getAcc(df, res_bnch, res_bnch2, initStrat, pairUpNm, parsPairUp, weightNm, w
     df_long = getLongFormat2(df, ["type", "dataset", "smpl"] + vars_weights)
     # get non-masked accuracy
     sig = 0.001
-    res_long , tabAcc = getAccuracy(df_long,nm, parVars=["additive"], conf=conf, n_smpls=n_smpls, sig=sig, res_bnch=res_bnch)
+    res_long , tabAcc = getAccuracy(df_long, nm, parVars=["additive"], conf=conf, n_smpls=n_smpls, sig=sig, res_bnch=res_bnch)
     print(pd.pivot_table(tabAcc, index=["type"], columns=["variable"], values="value", aggfunc=onp.sum))
     # get masked accuracy
-    _ , tabAcc_mask = getAccuracy(df_long, nm, parVars=["additive"], mask="additive", sig=sig, res_bnch=res_bnch, res_bnch2=res_bnch2)
+    
+    _ , tabAcc_mask = getAccuracy(df_long,  nm, parVars=["additive"], mask="additive", sig=sig, res_bnch=res_bnch, res_bnch2=res_bnch2)
     # df, df_rand, df_intsc, df_nn
     # "w_unif", "w_lowestHsic", "w_effFront", 'w_modSimpLogis', "w_modSimpRF", 'w_modCmplxLogis',"w_modCmplxRF"
     print(pd.pivot_table(tabAcc_mask, index=["type"], columns=["variable"], values="value", aggfunc=onp.sum))
@@ -2103,8 +1752,51 @@ def getAcc(df, res_bnch, res_bnch2, initStrat, pairUpNm, parsPairUp, weightNm, w
     tabAcc_mask = formatTabAcc(tabAcc_mask, initStrat, pairUpNm, parsPairUp, weightNm, parsWeight, "additive", sig)
     tabAcc = pd.concat([tabAcc, tabAcc_mask])
     tabAcc = tabAcc.reset_index()
+    print(tabAcc)
     return res_long, tabAcc
 
+
+def getPipelineDF(initStrats, parsPairUp, parsWeight):
+    initStratsDF = pd.DataFrame.from_dict({"initStrat": initStrats}, orient="columns")
+    initStratsDF["initStrat_id"] = ["_".join(el) for el in initStratsDF["initStrat"]]
+
+    # pair up options
+    pairUpNm = ["byParm", "rand", "intsc", "NN"]
+    funct = [smplParm, smplRand, smplFromIntersection, nearestNeighbors]
+    parsFunct = [getParsParm, getParsRand, getParsIntersection, getParsNN]
+    pairUpDict = {"pairUpNm": pairUpNm, "pairUpFunct": funct, "pairUpParsFunct": parsFunct}
+    pairUpDF = expandPars(pairUpDict, parsPairUp, "PairUp")
+
+    # weight options
+    varsExpl = ["dif_err", "dif_hsic", "dif_hsicc", "dif_mmd", "dif_hsicz", "min_err", "min_hsic", "min_hsicc",
+                "min_mmd", "min_hsicz", "max_err", "max_hsic", "max_hsicc", "max_mmd", "max_hsicz"]
+
+    m = int(5000)
+    weightNm = ["uniform", "lowestHsic", "effFront", "modSimp_logis", "modSimp_RF"]
+    getModMatFunct = [getModMatVan, getModMatVan, getModMatVan, getModMat, getModMat]
+    getModMatPars = [None, None, None, m, m]
+    getModFunct = [getModVan, getModVan, getModVan, getModSimp_logis, getModSimp_RF]
+    getModPars = [None, None, None, varsExpl, varsExpl]
+    nm = ["w_unif", "w_lowestHsic", "w_effFront", "w_modSimpLogis", "w_modSimpRF"]
+    weightFunct = [unifo, lowestHsic, effFront, modSimp_logis, modSimp_RF]
+    getWeightPars = [getParsUnifW, getParsHsicW, getParsEffFrontW, getParsModSimp_logisW, getParsModSimp_RFW]
+    parsTup = [[], ["var", "sig"], ["varsss", "sig"], ["varsExpl", "var_smpl_nm", "mod"],
+               ["varsExpl", "var_smpl_nm", "mod"]]
+    weightDict = {"weightNm": weightNm, "weightModMatFunct": getModMatFunct, "weightModMatPars": getModMatPars,
+                  "weightModFunct": getModFunct, "weightModPars": getModPars, "weightVar": nm,
+                  "weightFunct": weightFunct, "weightParsFunct": getWeightPars, "weightParsTup": parsTup}
+
+    weightDF = expandPars(weightDict, parsWeight, "Weight")
+    print("weightDF.shape: ", weightDF.shape)
+
+    # initStratsDF, pairUpDF, weightDF
+    initStrat_pairUp_df = permDFs(initStratsDF, pairUpDF)
+    initStrat_pairUp_df["df_id"] = "initStrat:" + initStrat_pairUp_df["initStrat_id"] + "*" + initStrat_pairUp_df[
+        "pairUpNm"] + ":" + initStrat_pairUp_df["parsPairUp_id"]
+    initStrat_pairUp_weight_df = permDFs(initStrat_pairUp_df, weightDF)
+    initStrat_pairUp_weight_df["acc_id"] = initStrat_pairUp_weight_df["df_id"] + "*" + initStrat_pairUp_weight_df[
+        "weightNm"] + ":" + initStrat_pairUp_weight_df["parsWeight_id"]
+    return initStrat_pairUp_df, initStrat_pairUp_weight_df
 
 def getPipelineDF(initStrats, parsPairUp, parsWeight, pairUpNm=None, weightNm=None):
     pairUpNm2 = ["byParm", "rand", "intsc", "NN"]
@@ -2115,11 +1807,12 @@ def getPipelineDF(initStrats, parsPairUp, parsWeight, pairUpNm=None, weightNm=No
     if weightNm is None:
         weightNm = weightNm2
 
+    
     initStratsDF = pd.DataFrame.from_dict({"initStrat": initStrats}, orient="columns")
     initStratsDF["initStrat_id"] = ["_".join(el) for el in initStratsDF["initStrat"]]
 
     # pair up options
-    idx = onp.array([mywhere(pu in pairUpNm2) for pu in pairUpNm2])
+    idx = onp.array([mywhere([pu == pu2 for pu2 in pairUpNm2]) for pu in pairUpNm])
     funct = [[smplParm, smplRand, smplFromIntersection, nearestNeighbors][i] for i in idx]
     parsFunct = [[getParsParm, getParsRand, getParsIntersection, getParsNN][i] for i in idx]
     pairUpDict = {"pairUpNm": pairUpNm, "pairUpFunct": funct, "pairUpParsFunct": parsFunct}
@@ -2131,7 +1824,7 @@ def getPipelineDF(initStrats, parsPairUp, parsWeight, pairUpNm=None, weightNm=No
 
     m = int(5000)
 
-    idx = onp.array([mywhere(ws in weightNm2) for ws in weightNm2])
+    idx = onp.array([mywhere([ws == ws2 for ws2 in weightNm2]) for ws in weightNm])
     getModMatFunct = [[getModMatVan, getModMatVan, getModMatVan, getModMat, getModMat][i] for i in idx]
     getModMatPars = [[None, None, None, m, m][i] for i in idx]
     getModFunct = [[getModVan, getModVan, getModVan, getModSimp_logis, getModSimp_RF][i] for i in idx]
@@ -2146,9 +1839,7 @@ def getPipelineDF(initStrats, parsPairUp, parsWeight, pairUpNm=None, weightNm=No
                   "weightFunct": weightFunct, "weightParsFunct": getWeightPars, "weightParsTup": parsTup}
 
     weightDF = expandPars(weightDict, parsWeight, "Weight")
-    print("weightDF.shape: ", weightDF.shape)
-    print(weightDF)
-
+    
     # initStratsDF, pairUpDF, weightDF
     initStrat_pairUp_df = permDFs(initStratsDF, pairUpDF)
     initStrat_pairUp_df["df_id"] = "initStrat:" + initStrat_pairUp_df["initStrat_id"] + "*" + initStrat_pairUp_df[
@@ -2158,91 +1849,3 @@ def getPipelineDF(initStrats, parsPairUp, parsWeight, pairUpNm=None, weightNm=No
         "weightNm"] + ":" + initStrat_pairUp_weight_df["parsWeight_id"]
     return initStrat_pairUp_df, initStrat_pairUp_weight_df
 
-def gridSize(pars):
-    return onp.prod([len(pars[k]) for k in pars.keys()])
-
-
-def sortCols(x):
-    rightOrder = ["SIM","SIMc","SIMln","SIMG","AN","AN-s","LS","LS-s","MN-U","all","add","nonAdd","tcep", "tcep_w", "tcep_Add", "tcep_NonAdd", "tcep_GEO", "tcep_NONGEO", "tcep_Disc",
-                  "tcep_NonDisc"]
-    if x.name == "type":
-        indx = [mywhere([xx == r for r in rightOrder]) for xx in list(x)]
-        res = indx
-    elif x.name == "nonRejAdd":
-        indx = [mywhere([xx == r for r in [True, False,"pct"]]) for xx in list(x)]
-        res = indx
-    else:
-        res = x
-
-    return res
-
-
-def addAdd(dec_combo):
-    dec_combo["type2"] = [t.split("_")[0] for t in dec_combo["type"]]
-
-    # all non tcep
-    dtsAll = list(onp.unique(dec_combo.loc[ (dec_combo["type"] != "tcep")]["dataset"]))
-    grpDef = [(t != "tcep") for t in dec_combo["type2"]]
-    dec_combo = addGrp2Dec(dec_combo, grpDef, "all")
-
-    # additive/non-additive tcep
-    dtsAdd = list(onp.unique(dec_combo.loc[(dec_combo["nonRejAdd"]) & (dec_combo["type"]=="tcep")]["dataset"]))
-    dtsNonAdd = list(onp.unique(dec_combo.loc[(onp.logical_not(dec_combo["nonRejAdd"])) & (dec_combo["type"]=="tcep")]["dataset"]))
-    print("dtsAdd: ", len(dtsAdd))
-    print("dtsNonAdd: ", len(dtsNonAdd))
-    grpDef = [(d in dtsAdd) & (t == "tcep") for (d,t) in zip(dec_combo["dataset"],dec_combo["type"])]
-    dec_combo = addGrp2Dec(dec_combo, grpDef, "tcep_Add")
-    grpDef = [(d in dtsNonAdd) & (t == "tcep") for (d,t) in zip(dec_combo["dataset"],dec_combo["type"])]
-    dec_combo = addGrp2Dec(dec_combo, grpDef, "tcep_NonAdd")
-
-    #additive/non additive non-tcep
-    dtsAdd = list(onp.unique(dec_combo.loc[(dec_combo["nonRejAdd"]) & (dec_combo["type2"] !="tcep")]["dataset"]))
-    dtsNonAdd = list(onp.unique(dec_combo.loc[(onp.logical_not(dec_combo["nonRejAdd"])) & (dec_combo["type2"] !="tcep")]["dataset"]))
-    #print("dtsAdd: ", dtsAdd)
-    #print("dtsNonAdd: ", dtsNonAdd)
-    print("dtsAdd: ", len(dtsAdd))
-    print("dtsNonAdd: ", len(dtsNonAdd))
-    grpDef = [(d in dtsAdd) & (t != "tcep") for (d,t) in zip(dec_combo["dataset"],dec_combo["type2"])]
-    dec_combo = addGrp2Dec(dec_combo, grpDef, "add")
-    grpDef = [(d in dtsNonAdd) & (t != "tcep") for (d,t) in zip(dec_combo["dataset"],dec_combo["type2"])]
-    dec_combo = addGrp2Dec(dec_combo, grpDef, "nonAdd")
-    return dec_combo
-
-def sortRows(x):
-    rightOrder = ["none","ANM","LN"]
-    rightOrderComb = ["none","add-test","hsicx-hsic","hsicx-hsicx"]
-    rightOrderVar = ["hsic","hsicx","ent","hsicz","hsicEnt","hsicxEnt"]
-    if (x.name == "model-add") | (x.name == "model-nonAdd"):
-        indx = [mywhere([xx == r for r in rightOrder]) for xx in list(x)]
-        res = indx
-    elif (x.name=="comb-crit"):
-        indx = [mywhere([xx == r for r in rightOrderComb]) for xx in list(x)]
-        res = indx
-    elif (x.name=="variable"):
-        indx = [mywhere([xx == r for r in rightOrderVar]) for xx in list(x)]
-        res = indx
-    else:
-        res = x
-
-    return res
-
-def getPerfTabAll(dec, msr, var):
-    varsAcc = ["type", 'variable',"model-add","model-nonAdd","comb-crit"]
-    res = dec.groupby(varsAcc).apply(msr, var=var)
-    res = res.reset_index()
-    res = res.rename(columns={0: "value"})
-    res = pd.pivot_table(res, index=["model-nonAdd","model-add","comb-crit","variable"], columns=["type"], values="value")
-    res = res.sort_index(axis=1, key=lambda x: sortCols(x))
-    res = res.sort_index(axis=0, key=lambda x: sortRows(x))
-    return res
-
-print("here")
-def getPerfTabAllByAdd(dec, msr, var):
-    varsAcc = ["type", 'variable',"model-add","model-nonAdd","comb-crit","nonRejAdd"]
-    res = dec.groupby(varsAcc).apply(msr, var=var)
-    res = res.reset_index()
-    res = res.rename(columns={0: "value"})
-    res = pd.pivot_table(res, index=["model-nonAdd","model-add","comb-crit","variable"], columns=["type","nonRejAdd"], values="value")
-    res = res.sort_index(axis=1, key=lambda x: sortCols(x))
-    res = res.sort_index(axis=0, key=lambda x: sortRows(x))
-    return res

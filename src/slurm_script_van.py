@@ -52,6 +52,8 @@ def load_dataset(dataset_num: int = 0, server: str="myLap") -> (np.ndarray, str)
     pars = {"lambda": [0.0001, 0.001, 0.01, 0.1],
             "sig": [0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99]}
 
+    pars = {"lambda":[0.0001, 0.001,0.01, 0.1, 1.0, 10.0], "sig": [0.5]}
+
     fileDict = {"TCEP-all": ['tcep'],
                 "SIM-1000_withZ": ['SIM', 'SIMc', 'SIMG', 'SIMln'],
                 "ANLSMN_withZ": ['AN', 'AN-s', 'LS', 'LS-s','MN-U']}
@@ -89,9 +91,19 @@ def load_dataset(dataset_num: int = 0, server: str="myLap") -> (np.ndarray, str)
         smpl = onp.random.randint(low=1, high=X.shape[0], size=maxData)
         X = X[smpl, :]
 
-    if (str(nm) == "8") | (str(nm) == "107") | (str(nm) == "70") & (fileNm == "TCEP-all"):
+    X = norml_mat(X)
+
+
+    #if (str(nm) == "8") | (str(nm) == "107") | (str(nm) == "70") & (fileNm == "TCEP-all"):
+    #    print("jittering")
+    #    X = jitter(X)
+
+    
+
+    if (fileNm == "TCEP-all"):
         print("jittering")
-        X = jitter(X)
+        #X = jitter(X) 
+        X = onp.apply_along_axis(jitterByDist, 0, X)
 
     X = np.array(norml_mat(X))
 
